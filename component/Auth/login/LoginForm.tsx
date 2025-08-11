@@ -91,7 +91,6 @@ export default function LoginForm({}: LoginFormProps) {
       localStorage.setItem("role", user.role);
       localStorage.setItem("user_id", user.id.toString());
       localStorage.setItem("refresh_token", user.refresh_token);
-
       setTimeout(() => {
         toast.dismiss(toastId);
         router.push("/dashboard?login=success");
