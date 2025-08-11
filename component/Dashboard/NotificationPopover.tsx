@@ -19,7 +19,11 @@ import WarningIcon from "@mui/icons-material/Warning";
 import SystemUpdateAltIcon from "@mui/icons-material/SystemUpdateAlt";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
+// import NotificationDialog from "./NotificationDialog";
+
+import { useState } from "react";
 dayjs.extend(relativeTime);
+
 type NotificationType = "info" | "warning" | "system";
 
 type NotificationItem = {
@@ -27,6 +31,7 @@ type NotificationItem = {
   type: NotificationType;
   message: string;
   createdAt: string;
+  isRead?: boolean;
 };
 
 type Props = {
@@ -35,7 +40,7 @@ type Props = {
   onClose: () => void;
   notifications: NotificationItem[];
   onRefresh: () => void;
-  onViewAll: () => void;
+  handleViewAll: () => void;
   isLoading: boolean;
 };
 
@@ -58,78 +63,105 @@ export default function NotificationPopover({
   onClose,
   notifications,
   onRefresh,
-  onViewAll,
+  // handleViewAll,
   isLoading,
 }: Props) {
+  const [showAll, setShowAll] = useState(false);
+
   return (
-    <Popover
-      open={open}
-      anchorEl={anchorEl}
-      onClose={onClose}
-      anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
-      transformOrigin={{ vertical: "top", horizontal: "right" }}
-      PaperProps={{
-        sx: {
-          p: 2,
-          width: 320,
-          maxHeight: 400,
-          borderRadius: 2,
-          boxShadow: 3,
-        },
-      }}
-    >
-      <Box display="flex" justifyContent="space-between" alignItems="center">
-        <Typography fontWeight={600}>Thông báo</Typography>
+    <>
+      <Popover
+        open={open}
+        anchorEl={anchorEl}
+        onClose={onClose}
+        anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+        transformOrigin={{ vertical: "top", horizontal: "right" }}
+        PaperProps={{
+          sx: {
+            p: 2,
+            width: 320,
+            maxHeight: 400,
+            overflowY: "auto",
 
-        <Tooltip title="Làm mới">
-          <IconButton size="small" onClick={onRefresh}>
-            <RefreshIcon fontSize="small" />
-          </IconButton>
-        </Tooltip>
-      </Box>
+            borderRadius: 2,
+            boxShadow: 3,
+          },
+        }}
+      >
+        <Box display="flex" justifyContent="space-between" alignItems="center">
+          <Typography fontWeight={600}>Thông báo</Typography>
 
-      <Divider sx={{ my: 1 }} />
-      {isLoading ? (
-        <Typography variant="body2" color="text.secondary">
-          Đang tải thông báo...
-        </Typography>
-      ) : notifications.length === 0 ? (
-        <Typography variant="body2" color="text.secondary">
-          Bạn có 0 thông báo
-        </Typography>
-      ) : (
-        <List dense disablePadding>
-          {notifications.map((note) => (
-            <ListItem key={note.id} alignItems="flex-start" sx={{ py: 1 }}>
-              <ListItemAvatar>
-                <Avatar
+          <Tooltip title="Làm mới">
+            <IconButton size="small" onClick={onRefresh}>
+              <RefreshIcon fontSize="small" />
+            </IconButton>
+          </Tooltip>
+        </Box>
+
+        <Divider sx={{ my: 1 }} />
+        {isLoading ? (
+          <Typography variant="body2" color="text.secondary">
+            Đang tải thông báo...
+          </Typography>
+        ) : notifications.length === 0 ? (
+          <Typography variant="body2" color="text.secondary">
+            Bạn có 0 thông báo
+          </Typography>
+        ) : (
+          <List dense disablePadding>
+            {(showAll ? notifications : notifications.slice(0, 3)).map(
+              (note) => (
+                <ListItem
+                  key={note.id}
+                  alignItems="flex-start"
                   sx={{
-                    bgcolor: "transparent",
-                    width: 32,
-                    height: 32,
+                    py: 1,
+
+                    bgcolor: note.isRead
+                      ? "transparent"
+                      : "rgba(25, 118, 210, 0.08)",
+                    borderRadius: 1,
                   }}
                 >
-                  {getIcon(note.type)}
-                </Avatar>
-              </ListItemAvatar>
-              <ListItemText
-                primary={note.message}
-                secondary={
-                  <Typography variant="caption" color="text.secondary">
-                    {note.createdAt}
-                  </Typography>
-                }
-              />
-            </ListItem>
-          ))}
-        </List>
-      )}
+                  <ListItemAvatar>
+                    <Avatar
+                      sx={{
+                        bgcolor: "transparent",
+                        width: 32,
+                        height: 32,
+                      }}
+                    >
+                      {getIcon(note.type)}
+                    </Avatar>
+                  </ListItemAvatar>
+                  <ListItemText
+                    primary={note.message}
+                    secondary={
+                      <Typography variant="caption" color="text.secondary">
+                        {note.createdAt}
+                      </Typography>
+                    }
+                  />
+                </ListItem>
+              )
+            )}
+          </List>
+        )}
 
-      <Box textAlign="center" mt={1}>
-        <Button size="small" onClick={onViewAll} sx={{ textTransform: "none" }}>
-          Xem tất cả
-        </Button>
-      </Box>
-    </Popover>
+        <Box textAlign="center" mt={1}>
+          <Button
+            size="small"
+            onClick={() => setShowAll(!showAll)}
+            sx={{ textTransform: "none" }}
+          >
+            {showAll ? "Thu gọn" : "Xem tất cả"}
+          </Button>
+        </Box>
+      </Popover>
+      {/* <NotificationDialog
+        open={openDialog}
+        onClose={() => setOpenDialog(false)}
+      /> */}
+    </>
   );
 }

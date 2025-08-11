@@ -5,6 +5,8 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { config } from "@fortawesome/fontawesome-svg-core";
 import "@fortawesome/fontawesome-svg-core/styles.css";
+import AdminPanelSettingsIcon from "@mui/icons-material/AdminPanelSettings";
+
 import {
   faTachometerAlt,
   faBox,
@@ -30,19 +32,23 @@ import {
   Box,
   Typography,
   Collapse,
+  Divider,
+  IconButton,
 } from "@mui/material";
-import { ExpandLess, ExpandMore } from "@mui/icons-material";
+import { ChevronLeft, ExpandLess, ExpandMore, Menu } from "@mui/icons-material";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-
+import Image from "next/image";
+// import { getMenuItems } from "../../src/app/api/menuItems";
 config.autoAddCss = false;
 
-const drawerWidth = 240;
+const drawerWidth = 280;
 
 const Sidebar = () => {
   const pathname = usePathname();
   const [openMenus, setOpenMenus] = useState<{ [label: string]: boolean }>({});
   const [isClient, setIsClient] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [collapsed, setCollapsed] = useState(false);
 
   useEffect(() => {
     setIsClient(true);
@@ -57,10 +63,8 @@ const Sidebar = () => {
   const isActive = (href: string) => pathname === href;
   const isSubActive = (path: string) => pathname.startsWith(path);
 
-  // Nếu chưa client-side, không render gì để tránh hydration mismatch
   if (!isClient) return null;
 
-  // menuItems phải nằm bên trong component, sau khi có isAdmin
   const menuItems = [
     {
       label: "Hệ thống",
@@ -162,29 +166,44 @@ const Sidebar = () => {
     <Drawer
       variant="permanent"
       sx={{
-        width: drawerWidth,
+        width: collapsed ? 72 : drawerWidth,
         flexShrink: 0,
+        whiteSpace: "nowrap",
+        transition: "width 0.3s ease",
         [`& .MuiDrawer-paper`]: {
-          width: drawerWidth,
+          width: collapsed ? 72 : drawerWidth,
+          transition: "width 0.3s ease",
+          overflowX: "hidden",
+          overflowY: "auto",
           boxSizing: "border-box",
           backgroundColor: "#f9f9f9",
         },
       }}
     >
-      <Toolbar>
-        <Typography
-          variant="h4"
-          sx={{
-            fontWeight: 700,
-            color: "#2e7d32",
-            letterSpacing: "0.5px",
-            textShadow: "1px 1px 2px rgba(0,0,0,0.1)",
-          }}
-        >
-          Quản trị
-        </Typography>
+      <Toolbar sx={{ justifyContent: "space-between" }}>
+        {!collapsed && (
+          <Typography
+            variant="h6"
+            fontWeight={700}
+            color="primary"
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              gap: 1,
+              textTransform: "uppercase",
+            }}
+          >
+            <AdminPanelSettingsIcon fontSize="large" />
+            Quản trị
+          </Typography>
+        )}
+        <IconButton onClick={() => setCollapsed(!collapsed)}>
+          {collapsed ? <Menu /> : <ChevronLeft />}
+        </IconButton>
       </Toolbar>
-      <Box sx={{ overflow: "auto" }}>
+      <Divider />
+
+      <Box sx={{ overflowX: "hidden", overflowY: "auto", flexGrow: 1 }}>
         <List>
           {menuItems
             .filter((item) => !item.hidden)
@@ -196,10 +215,14 @@ const Sidebar = () => {
                   <Box key={item.label}>
                     <ListItemButton onClick={() => handleToggle(item.label)}>
                       <ListItemIcon>{item.icon}</ListItemIcon>
-                      <ListItemText primary={item.label} />
-                      {open ? <ExpandLess /> : <ExpandMore />}
+                      {!collapsed && <ListItemText primary={item.label} />}
+                      {!collapsed && (open ? <ExpandLess /> : <ExpandMore />)}
                     </ListItemButton>
-                    <Collapse in={open} timeout="auto" unmountOnExit>
+                    <Collapse
+                      in={open && !collapsed}
+                      timeout="auto"
+                      unmountOnExit
+                    >
                       <List component="div" disablePadding>
                         {item.children.map((child, idx) => (
                           <ListItemButton
@@ -210,7 +233,7 @@ const Sidebar = () => {
                             sx={{ pl: 4 }}
                           >
                             <ListItemIcon>{child.icon}</ListItemIcon>
-                            <ListItemText>{child.label}</ListItemText>
+                            <ListItemText primary={child.label} />
                           </ListItemButton>
                         ))}
                       </List>
@@ -226,13 +249,34 @@ const Sidebar = () => {
                     selected={isActive(item.href)}
                   >
                     <ListItemIcon>{item.icon}</ListItemIcon>
-                    <ListItemText primary={item.label} />
+                    {!collapsed && <ListItemText primary={item.label} />}
                   </ListItemButton>
                 </Box>
               );
             })}
         </List>
       </Box>
+      {!collapsed && (
+        <Box
+          sx={{
+            position: "relative",
+            width: 300,
+            height: 220,
+            justifyContent: "flex-end",
+            alignItems: "center",
+          }}
+        >
+          <Image
+            src="/images/aa.jpg"
+            alt="Logo"
+            fill
+            style={{
+              objectFit: "contain",
+              opacity: 0.8,
+            }}
+          />
+        </Box>
+      )}
     </Drawer>
   );
 };

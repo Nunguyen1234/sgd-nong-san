@@ -1,6 +1,9 @@
 "use client";
 import { useForm } from "react-hook-form";
+import Image from "next/image";
 import toast from "react-hot-toast";
+import { BASE_URL_API } from "../../src/app/api/axiosConfig";
+
 import LockResetIcon from "@mui/icons-material/LockReset";
 
 import React, { useState, useEffect } from "react";
@@ -12,12 +15,9 @@ import {
   Box,
   Menu,
   MenuItem,
-  Avatar,
   Tooltip,
   Divider,
   Stack,
-  Select,
-  SelectChangeEvent,
   DialogContent,
   DialogActions,
   Button,
@@ -34,60 +34,102 @@ import HelpOutlineIcon from "@mui/icons-material/HelpOutline";
 import AccountCircleIcon from "@mui/icons-material/AccountCircle";
 import LogoutIcon from "@mui/icons-material/Logout";
 import { Visibility, VisibilityOff } from "@mui/icons-material";
-import apiAxios, { BASE_URL_API } from "@/app/api/axiosConfig";
 import { AxiosError } from "axios";
 import { useRouter } from "next/navigation";
+// import type { SelectChangeEvent } from "@mui/material";
+
 import NotificationPopover from "./NotificationPopover";
-
-// type NotificationType = "info" | "warning" | "system";
-
-type User = {
-  id: number;
-  userName: string;
-  avatarUrl?: string;
-  role?: string;
-};
+import { logout } from "../../src/app/api/axiosConfig";
+import LocaleSwitcher from "./SwitchLanguage/LocaleSwitcher";
+import dayjs from "dayjs";
+import { NotificationItem } from "src/hook/useNotifications";
+import apiAxios from "../../src/app/api/axiosConfig";
 
 type ChangePasswordForm = {
   oldPassword: string;
   newPassword: string;
 };
+const fakeNotifications: NotificationItem[] = [
+  {
+    id: 1,
+    type: "info",
+    message: "Biến động thị trường mới.",
+    createdAt: dayjs().subtract(2, "minute").fromNow(),
+    isRead: false, // thông báo mơi
+  },
+  {
+    id: 2,
+    type: "warning",
+    message: " Hê thống yêu cầu cập nhật lại hồ sơ của bạn",
+    createdAt: dayjs().subtract(1, "hour").fromNow(),
+    isRead: false,
+  },
+  {
+    id: 3,
+    type: "system",
+    message: "Hệ thống sẽ bảo trì lúc 22:00 hôm nay.",
+    createdAt: dayjs().subtract(3, "day").fromNow(),
+    isRead: true,
+  },
+  {
+    id: 4,
+    type: "system",
+    message: "Có thông báo mới về biến động thị trường.",
+    createdAt: dayjs().subtract(3, "day").fromNow(),
+    isRead: true,
+  },
+  {
+    id: 5,
+    type: "system",
+    message: "Tổng thống ép thuế.",
+    createdAt: dayjs().subtract(3, "day").fromNow(),
+    isRead: true,
+  },
+];
 
 const Header = () => {
-  // const {
-  //   data: notificationData = [],
-  //   isLoading,
-  //   refetch,
-  // } = useNotifications();
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    // Gọi lần đầu khi component mount
+    setAvatarUrl(localStorage.getItem("avatar"));
+
+    // Lắng nghe sự kiện cập nhật avatar
+    const handleAvatarUpdated = () => {
+      const updatedAvatar = localStorage.getItem("avatar");
+      setAvatarUrl(updatedAvatar);
+    };
+
+    window.addEventListener("avatar-updated", handleAvatarUpdated);
+
+    return () => {
+      window.removeEventListener("avatar-updated", handleAvatarUpdated);
+    };
+  }, []);
+
+  // const pathname = usePathname();
+  // const handleLangChange = (event: SelectChangeEvent) => {
+  //   const selectedLang = event.target.value;
+
+  //   document.cookie = `NEXT_LOCALE=${selectedLang}; path=/`;
+
+  //   const segments = pathname.split("/");
+  //   segments[1] = selectedLang;
+  //   const newPath = segments.join("/");
+
+  //   router.replace(newPath);
+  // };
 
   const router = useRouter();
-  const notificationCount = 3;
+  const notifications = fakeNotifications;
+  const notificationCount = notifications.filter((n) => !n.isRead).length;
+
   const [notificationAnchor, setNotificationAnchor] =
     useState<null | HTMLElement>(null);
   const isNotificationOpen = !!notificationAnchor;
   const handleOpenNotification = (event: React.MouseEvent<HTMLElement>) => {
     setNotificationAnchor(event.currentTarget);
   };
-  // const notifications: NotificationItem[] = [
-  //   {
-  //     id: 1,
-  //     type: "info",
-  //     message: "Bạn có bài đăng mới đang chờ xử lý.",
-  //     createdAt: "1 giờ trước",
-  //   },
-  //   {
-  //     id: 2,
-  //     type: "warning",
-  //     message: "Hệ thống yêu cầu cập nhật mật khẩu.",
-  //     createdAt: "Hôm qua",
-  //   },
-  //   {
-  //     id: 3,
-  //     type: "system",
-  //     message: "Doanh thu tháng này đã tăng 25%.",
-  //     createdAt: "2 ngày trước",
-  //   },
-  // ];
 
   const theme = useTheme();
   const handleConfirmChangePassword = async (data: ChangePasswordForm) => {
@@ -96,7 +138,7 @@ const Header = () => {
 
     try {
       const res = await apiAxios.post(
-        `${BASE_URL_API}/change-password`,
+        `${BASE_URL_API}/auth/change-password`,
         {
           oldPassword: data.oldPassword,
           newPassword: data.newPassword,
@@ -143,23 +185,8 @@ const Header = () => {
   const handleCloseModal = () => {
     setOpenChangePassword(false);
   };
-  const [user, setUser] = useState<User | null>(null);
 
-  const [lang, setLang] = useState("vi");
   const [anchorUser, setAnchorUser] = useState<null | HTMLElement>(null);
-
-  useEffect(() => {
-    const stored = localStorage.getItem("user");
-    if (stored) {
-      setUser(JSON.parse(stored));
-    }
-  }, []);
-
-  const handleLangChange = (event: SelectChangeEvent) => {
-    const selected = event.target.value;
-    setLang(selected);
-    localStorage.setItem("lang", selected);
-  };
 
   const handleOpenUser = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorUser(event.currentTarget);
@@ -167,20 +194,25 @@ const Header = () => {
 
   const handleCloseUser = () => setAnchorUser(null);
 
-  // Tạo biến chung là access_token
-  const handleLogout = () => {
-    localStorage.removeItem("access_token");
-    window.location.href = "/auth/login";
-  };
-  // const handleChangePassword = () => {
-  //   localStorage.removeItem("accessToken");
-  //   window.location.href = "/change-password";
+  // const handleLogout = async () => {
+  //   // const access_token = localStorage.getItem("access_token");
+  //   // try {
+  //   //   await apiAxios.post(`${BASE_URL_API}/auth/logout`, null, {
+  //   //     headers: {
+  //   //       Authorization: `Bearer ${access_token}`,
+  //   //     },
+  //   //     withCredentials: true,
+  //   //   });
+  //   //   toast.success("Đăng xuất thành công");
+  //   // } catch (error) {
+  //   //   toast.error("Lỗi khi đăng xuất");
+  //   //   console.error("Logout error:", error);
+  //   // } finally {
+  //   //   localStorage.removeItem("access_token");
+  //   //   window.location.href = "/auth/login";
+  //   // }
   // };
-  // lay anh avatar cua user
-  useEffect(() => {
-    const storedLang = localStorage.getItem("lang");
-    if (storedLang) setLang(storedLang);
-  }, []);
+
   const handleAccountClick = () => {
     router.push("/dashboard/profile");
   };
@@ -188,7 +220,7 @@ const Header = () => {
   return (
     <AppBar
       position="fixed"
-      elevation={0}
+      elevation={1}
       sx={{
         backgroundColor: "#fff",
         zIndex: 1101,
@@ -214,7 +246,7 @@ const Header = () => {
             minHeight: "90px",
           }}
         >
-          <Box display="flex" alignItems="center" gap={1} sx={{ ml: 25 }}>
+          <Box display="flex" alignItems="center" gap={1} sx={{ ml: 40 }}>
             <Typography variant="h6" fontWeight={600} color="#2f2f5f">
               Chào mừng bạn đến với{" "}
               <Box component="span" color="success.main" fontWeight={700}>
@@ -224,8 +256,8 @@ const Header = () => {
           </Box>
 
           <Stack direction="row" alignItems="center" spacing={1}>
-            <Select
-              value={lang}
+            {/* <Select
+              value={currentLocale}
               onChange={handleLangChange}
               variant="standard"
               disableUnderline
@@ -260,8 +292,8 @@ const Header = () => {
                 />
                 English
               </MenuItem>
-            </Select>
-
+            </Select> */}
+            <LocaleSwitcher />
             <Box
               onClick={handleOpenUser}
               sx={{
@@ -275,14 +307,27 @@ const Header = () => {
                 py: 0.5,
               }}
             >
-              <Avatar sx={{ width: 28, height: 28 }} src={user?.avatarUrl} />
-              <Box>
-                <Typography fontSize={14} fontWeight={600} color="#2f2f5f">
-                  {user?.userName || "Người dùng"}
-                </Typography>
-                <Typography fontSize={12} color="text.secondary">
-                  Nhà sản xuất
-                </Typography>
+              <Box display="flex" alignItems="center" gap={1.5}>
+                <Image
+                  src={avatarUrl || "/images/default-avatar.png"}
+                  alt="Ảnh đại diện"
+                  width={48}
+                  height={48}
+                  style={{
+                    borderRadius: "50%",
+                    objectFit: "cover",
+                    border: "1px solid #ccc",
+                  }}
+                />
+
+                <Box>
+                  <Typography fontSize={14} fontWeight={600} color="#2f2f5f">
+                    Người dùng
+                  </Typography>
+                  <Typography fontSize={12} color="text.secondary">
+                    Nhà sản xuất
+                  </Typography>
+                </Box>
               </Box>
             </Box>
 
@@ -316,7 +361,7 @@ const Header = () => {
           >
             <Divider />
             <MenuItem
-              onClick={handleLogout}
+              // onClick={handleLogout}
               sx={{
                 display: "flex",
                 alignItems: "center",
@@ -339,7 +384,9 @@ const Header = () => {
               }}
             >
               <LogoutIcon fontSize="small" />
-              <Typography className="logout-text">Đăng xuất</Typography>
+              <Typography className="logout-text" onClick={logout}>
+                Đăng xuất
+              </Typography>
             </MenuItem>
             <MenuItem
               onClick={handleAccountClick}
@@ -481,15 +528,15 @@ const Header = () => {
         open={isNotificationOpen}
         anchorEl={notificationAnchor}
         onClose={() => setNotificationAnchor(null)}
-        // notifications={notificationData}
-        // onRefresh={refetch}
-        onViewAll={() => router.push("/dashboard/notifications")}
-        notifications={[]}
-        // xử lý cái này nữa
-        onRefresh={function (): void {
+        // onViewAll={() => router.push("/dashboard/notifications")}
+        notifications={notifications}
+        onRefresh={() => {
+          console.log("Làm mới thông báo");
+        }}
+        isLoading={false}
+        handleViewAll={function (): void {
           throw new Error("Function not implemented.");
         }}
-        isLoading={false} // isLoading={isLoading}
       />
     </AppBar>
   );

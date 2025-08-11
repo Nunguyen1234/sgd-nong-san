@@ -1,0 +1,58 @@
+.input-shine-wrapper {
+  position: relative;
+  overflow: hidden;
+}
+
+.input-shine-wrapper::before {
+  content: "";
+  position: absolute;
+  top: 10;
+
+  left: -120%;
+  width: 80%; /* Điều chỉnh kích thước chiều rộng vùng sáng */
+  height: 80%;
+  background: linear-gradient(
+    120deg,
+    transparent 0%,
+    rgb(146, 161, 255) 30% /* transparent 100% */
+  );
+  transform: skewX(-30deg);
+  transition: left 1.5s ease;
+  pointer-events: none;
+}
+
+.input-shine-wrapper:hover::before {
+  left: 110%;
+}
+.shine-text {
+  position: relative;
+  display: inline-block;
+  color: #60a5fa; /* Màu blue-400 */
+  overflow: hidden;
+}
+
+.shine-text::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -75%;
+  width: 50%;
+  height: 100%;
+  background: linear-gradient(
+    120deg,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0.6) 50%,
+    rgba(255, 255, 255, 0) 100%
+  );
+  transform: skewX(-20deg);
+  animation: shine 2s infinite;
+}
+
+@keyframes shine {
+  0% {
+    left: -75%;
+  }
+  100% {
+    left: 125%;
+  }
+}

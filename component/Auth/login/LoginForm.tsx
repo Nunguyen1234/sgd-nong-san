@@ -3,36 +3,35 @@
 import toast from "react-hot-toast";
 import React, { useState } from "react";
 import { useForm } from "react-hook-form";
-import {
-  Box,
-  IconButton,
-  InputAdornment,
-  Paper,
-  TextField,
-  Typography,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  Button,
-} from "@mui/material";
-import Visibility from "@mui/icons-material/Visibility";
-import VisibilityOff from "@mui/icons-material/VisibilityOff";
-import SaveIcon from "@mui/icons-material/Save";
-import { LoadingButton } from "@mui/lab";
-import apiAxios, { BASE_URL_API } from "@/app/api/axiosConfig";
+import "../../../src/styles/input-shine.css";
+
+// import {
+//   Box,
+//   IconButton,
+//   InputAdornment,
+//   Paper,
+//   TextField,
+//   Typography,
+//   Dialog,
+//   DialogTitle,
+//   DialogContent,
+//   DialogActions,
+//   Button,
+// } from "@mui/material";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faExclamationTriangle } from "@fortawesome/free-solid-svg-icons";
+// import Visibility from "@mui/icons-material/Visibility";
+// import VisibilityOff from "@mui/icons-material/VisibilityOff";
+// import SaveIcon from "@mui/icons-material/Save";
+// import { LoadingButton } from "@mui/lab";
 import { useRouter } from "next/navigation";
+import apiAxios, { BASE_URL_API } from "src/app/api/axiosConfig";
+import { Visibility, VisibilityOff } from "@mui/icons-material";
 
 type LoginFormInputs = {
-  userName: string;
+  email: string;
   password: string;
 };
-// type dataUser = {
-//   id: number;
-//   email: string;
-//   role: string;
-//   access_token: string;
-// };
 
 type LoginFormProps = {
   mode: "admin" | "user";
@@ -45,6 +44,7 @@ type LoginResponse = {
     email: string;
     role: string;
     access_token: string;
+    refresh_token: string;
   };
 };
 type ForgetPasswordResponse = {
@@ -53,7 +53,7 @@ type ForgetPasswordResponse = {
   message?: string;
 };
 
-export default function LoginForm({ mode }: LoginFormProps) {
+export default function LoginForm({}: LoginFormProps) {
   const router = useRouter();
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -69,13 +69,16 @@ export default function LoginForm({ mode }: LoginFormProps) {
   } = useForm<LoginFormInputs>();
 
   const onSubmit = async (data: LoginFormInputs) => {
+    console.log("Dữ liệu gửi login:", data);
     setLoading(true);
     const toastId = toast.loading("Đang đăng nhập...");
-
     try {
       const res = await apiAxios.post<LoginResponse>(
-        `${BASE_URL_API}/login`,
-        data
+        `${BASE_URL_API}/auth/login`,
+        {
+          email: data.email,
+          password: data.password,
+        }
       );
       console.log("Login response:", res);
 
@@ -87,13 +90,12 @@ export default function LoginForm({ mode }: LoginFormProps) {
       localStorage.setItem("access_token", user.access_token);
       localStorage.setItem("role", user.role);
       localStorage.setItem("user_id", user.id.toString());
+      localStorage.setItem("refresh_token", user.refresh_token);
 
-      toast.success("Đăng nhập thành công!", { id: toastId });
-      if (mode === "admin") {
-        router.push("/dashboard");
-      } else {
-        router.push("/dashboard");
-      }
+      setTimeout(() => {
+        toast.dismiss(toastId);
+        router.push("/dashboard?login=success");
+      }, 800);
     } catch (err) {
       console.error(err);
       toast.error("Sai tài khoản hoặc mật khẩu!", { id: toastId });
@@ -111,12 +113,8 @@ export default function LoginForm({ mode }: LoginFormProps) {
     const toastId = toast.loading("Vui lòng kiểm tra email của bạn.");
     try {
       const res = await apiAxios.post<ForgetPasswordResponse>(
-        `${BASE_URL_API}/forget-password`,
-        {
-          email: forgotEmail,
-          otpCode,
-          newPassword,
-        }
+        `${BASE_URL_API}/auth/forget-password`,
+        { email: forgotEmail }
       );
 
       if (res.data.success) {
@@ -124,13 +122,16 @@ export default function LoginForm({ mode }: LoginFormProps) {
         setOpenForgot(false);
         setOpenOtp(true);
       } else {
-        toast.error("Không tìm thấy email!", { id: toastId });
+        toast.error(res.data.message || "Không tìm thấy email!", {
+          id: toastId,
+        });
       }
     } catch (err) {
       console.log(err);
       toast.error("Lỗi khi gửi yêu cầu quên mật khẩu!", { id: toastId });
     }
   };
+
   const handleConfirmOtp = async () => {
     if (!forgotEmail || !otpCode || !newPassword) {
       toast.error("Vui lòng nhập đầy đủ thông tin!");
@@ -140,7 +141,7 @@ export default function LoginForm({ mode }: LoginFormProps) {
     const toastId = toast.loading("Đang xác minh...");
     try {
       const res = await apiAxios.post<ForgetPasswordResponse>(
-        `${BASE_URL_API}/confirm-password`,
+        `${BASE_URL_API}/auth/confirm-password`,
         {
           email: forgotEmail,
           otpCode,
@@ -163,180 +164,193 @@ export default function LoginForm({ mode }: LoginFormProps) {
   };
 
   return (
-    <Box
-      sx={{
-        height: "100vh",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        p: 2,
-        backgroundImage: 'url("/images/br.png")',
-        backgroundSize: "cover",
-        backgroundPosition: "center",
-      }}
+    <div
+      className="flex items-center justify-center min-h-screen bg-cover bg-center p-4"
+      style={{ backgroundImage: 'url("/images/br.png")' }}
     >
-      <Paper
-        elevation={10}
-        sx={{ width: "100%", maxWidth: 480, p: 4, borderRadius: 3 }}
+      <div
+        data-aos="fade-down-right"
+        className="w-full max-w-md bg-white/10 backdrop-blur-md rounded-2xl p-6 shadow-lg text-white"
       >
-        <Typography
-          variant="h4"
-          align="center"
-          sx={{
-            background: "linear-gradient(to right, #3b82f6, #06b6d4)",
-            WebkitBackgroundClip: "text",
-            WebkitTextFillColor: "transparent",
-          }}
-        >
+        <h2 className="text-3xl font-bold text-center bg-gradient-to-r from-blue-500 to-cyan-400 bg-clip-text text-transparent mb-6">
           Đăng nhập
-        </Typography>
+        </h2>
 
-        <form onSubmit={handleSubmit(onSubmit)} noValidate>
-          <TextField
-            label="Tên đăng nhập"
-            fullWidth
-            margin="normal"
-            {...register("userName", {
-              required: "Tên đăng nhập không được để trống",
-            })}
-            error={!!errors.userName}
-            helperText={errors.userName?.message}
-          />
-
-          <TextField
-            label="Mật khẩu"
-            fullWidth
-            type={showPassword ? "text" : "password"}
-            margin="normal"
-            {...register("password", {
-              required: "Mật khẩu không được để trống",
-              minLength: {
-                value: 6,
-                message: "Mật khẩu phải từ 6 ký tự trở lên",
-              },
-            })}
-            error={!!errors.password}
-            helperText={errors.password?.message}
-            InputProps={{
-              endAdornment: (
-                <InputAdornment position="end">
-                  <IconButton
-                    onClick={() => setShowPassword(!showPassword)}
-                    edge="end"
-                  >
-                    {showPassword ? <VisibilityOff /> : <Visibility />}
-                  </IconButton>
-                </InputAdornment>
-              ),
+        <form onSubmit={handleSubmit(onSubmit)}>
+          {/* <div className="input-shine-wrapper mb-4"> */}
+          {/* <div className="input-shine" /> */}
+          <div
+            className="group relative rounded-lg mb-4 p-[2px] transition duration-300"
+            style={{
+              background:
+                "radial-gradient(0px at 50% 50%, rgb(59, 130, 246), transparent 80%)",
             }}
-          />
-
-          <Box display="flex" justifyContent="flex-end">
-            <Typography
-              onClick={() => setOpenForgot(true)}
-              sx={{
-                mt: 1,
-                fontSize: 14,
-                cursor: "pointer",
-                textDecoration: "underline",
-                color: "#3b82f6",
-              }}
-            >
-              Quên mật khẩu?
-            </Typography>
-          </Box>
-
-          <LoadingButton
-            type="submit"
-            fullWidth
-            variant="contained"
-            loading={loading}
-            loadingPosition="start"
-            startIcon={<SaveIcon />}
-            sx={{ mt: 2 }}
           >
-            Đăng nhập
-          </LoadingButton>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Email
+            </label>
+            <input
+              id="email"
+              type="email"
+              {...register("email", { required: "Email là bắt buộc" })}
+              placeholder="Email"
+              className="w-full   px-4 py-3 rounded-md bg-white text-black border border-gray-300 shadow-input transition duration-300 group-hover:shadow-none focus:outline-none focus:ring-2 focus:ring-blue-400 relative z-10"
+            />
+            {errors.email && (
+              <p className="text-red-500 text-sm mt-1">
+                {errors.email.message as string}
+              </p>
+            )}
+          </div>
+          {/* </div> */}
 
-          <Typography align="center" sx={{ mt: 3 }}>
-            Chưa có tài khoản?{" "}
-            <span
-              onClick={() => router.push("/auth/register")}
-              style={{
-                cursor: "pointer",
-                textDecoration: "underline",
-                background: "linear-gradient(to right, #22c55e, #14b8a6)",
-                WebkitBackgroundClip: "text",
-                WebkitTextFillColor: "transparent",
-              }}
-            >
-              Đăng ký
-            </span>
-          </Typography>
+          {/* <div className="input-shine-wrapper mb-2"> */}
+          <div className="input-shine" />
+          <div
+            className="group relative rounded-lg p-[2px] transition duration-300"
+            style={{
+              background:
+                "radial-gradient(0px at 50% 50%, rgb(59, 130, 246), transparent 80%)",
+            }}
+          >
+            <div className="mt-4">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Mật khẩu
+              </label>
+              <div className="relative">
+                <input
+                  id="password"
+                  type={showPassword ? "text" : "password"}
+                  {...register("password", {
+                    required: "Mật khẩu là bắt buộc",
+                  })}
+                  placeholder="Mật khẩu"
+                  className="w-full px-4 pr-10 py-3 rounded-md bg-white text-black border border-gray-300 shadow-input 
+               transition duration-300 group-hover:shadow-none focus:outline-none focus:ring-2 focus:ring-blue-400"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute inset-y-0 right-3 flex items-center text-gray-500"
+                >
+                  {showPassword ? (
+                    <VisibilityOff fontSize="small" />
+                  ) : (
+                    <Visibility fontSize="small" />
+                  )}
+                </button>
+              </div>
+            </div>
+            {errors.password && (
+              <p className="text-red-500 text-sm mt-1">
+                {errors.password.message}
+              </p>
+            )}
+          </div>
+          {/* </div> */}
+
+          <div
+            className="text-blue-600 font-semibold text-right text-sm cursor-pointer mt-4 mb-4 hover:text-blue-700 transition-all duration-200 animate-pulse flex items-center justify-end gap-1"
+            onClick={() => setOpenForgot(true)}
+          >
+            Quên mật khẩu?
+          </div>
+          <button
+            type="submit"
+            className="  w-full bg-blue-600 hover:bg-blue-700 transition p-3 rounded-lg text-white font-semibold flex items-center justify-center"
+            disabled={loading}
+          >
+            {loading ? "Đang đăng nhập..." : "Đăng nhập"}
+          </button>
         </form>
-      </Paper>
-      {/* Modal Quên Mật Khẩu */}
-      <Dialog
-        open={openForgot}
-        onClose={(event, reason) => {
-          if (reason !== "backdropClick" && reason !== "escapeKeyDown") {
-            setOpenForgot(false);
-          }
-        }}
-        disableEscapeKeyDown
-      >
-        <DialogTitle>Quên mật khẩu</DialogTitle>
-        <DialogContent>
-          <TextField
-            fullWidth
-            label="Email đã đăng ký"
-            type="email"
-            value={forgotEmail}
-            onChange={(e) => setForgotEmail(e.target.value)}
-            sx={{ mt: 1 }}
-          />
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setOpenForgot(false)}>Hủy</Button>
-          <Button onClick={handleForgotPassword} variant="contained">
-            Gửi
-          </Button>
-        </DialogActions>
-      </Dialog>
+        <p className="text-center mt-4 text-sm mb-2">
+          Chưa có tài khoản?{" "}
+          <span
+            className="text-[oklch(83.7%_0.22_142.5)] font-semibold cursor-pointer hover:brightness-110 transition"
+            onClick={() => router.push("/auth/register")}
+          >
+            Đăng ký
+          </span>
+        </p>
 
-      <Dialog
-        open={openOtp}
-        onClose={() => {
-          setOpenOtp(false);
-          setOtpCode("");
-          setNewPassword("");
-        }}
-      >
-        <DialogTitle>Xác minh OTP</DialogTitle>
-        <DialogContent>
-          <TextField
-            fullWidth
-            label="Mã OTP"
-            value={otpCode}
-            onChange={(e) => setOtpCode(e.target.value)}
-            sx={{ mt: 1 }}
-          />
-          <TextField
-            fullWidth
-            label="Mật khẩu mới"
-            type="password"
-            value={newPassword}
-            onChange={(e) => setNewPassword(e.target.value)}
-            sx={{ mt: 2 }}
-          />
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setOpenOtp(false)}>Hủy</Button>
-          <Button variant="contained" onClick={handleConfirmOtp}>
-            Xác nhận
-          </Button>
-        </DialogActions>
-      </Dialog>
-    </Box>
+        {openForgot && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-xl p-6 w-full max-w-sm text-black">
+              <h3 className="text-lg font-semibold mb-2">Quên mật khẩu</h3>
+              <p className="text-sm text-gray-600 mb-4">
+                <FontAwesomeIcon
+                  icon={faExclamationTriangle}
+                  className="text-orange-500 mr-2"
+                />
+                Vui lòng nhập email đã đăng ký trước đó!
+              </p>
+              {/* <input
+              {...register("email", { required: "Email không được để trống" })}
+              type="email"
+              placeholder="Email đăng nhập"
+              className="w-full bg-white text-black p-3 rounded-md outline-none"
+            /> */}
+              <input
+                type="email"
+                placeholder="Email đã đăng ký"
+                value={forgotEmail}
+                onChange={(e) => setForgotEmail(e.target.value)}
+                className="w-full px-4 py-3 rounded-md bg-white text-black border border-gray-300 shadow-input transition duration-300 group-hover:shadow-none focus:outline-none focus:ring-2 focus:ring-blue-400 mb-2"
+              />
+              <div className="flex justify-end gap-2 mb-2">
+                <button
+                  onClick={() => setOpenForgot(false)}
+                  className="text-gray-600"
+                >
+                  Hủy
+                </button>
+                <button
+                  onClick={handleForgotPassword}
+                  className="bg-blue-600 text-white px-4 py-2 rounded"
+                >
+                  Gửi
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {openOtp && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-xl p-6 w-full max-w-sm text-black">
+              <h3 className="text-lg font-semibold mb-2">Xác minh OTP</h3>
+              <input
+                type="text"
+                placeholder="Mã OTP"
+                value={otpCode}
+                onChange={(e) => setOtpCode(e.target.value)}
+                className="w-full border p-2 rounded mb-3"
+              />
+              <input
+                type="password"
+                placeholder="Mật khẩu mới"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                className="w-full border p-2 rounded mb-4"
+              />
+              <div className="flex justify-end gap-2">
+                <button
+                  onClick={() => setOpenOtp(false)}
+                  className="text-gray-600"
+                >
+                  Hủy
+                </button>
+                <button
+                  onClick={handleConfirmOtp}
+                  className="bg-blue-600 text-white px-4 py-2 rounded"
+                >
+                  Xác nhận
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
   );
 }

@@ -1,0 +1,46 @@
+{
+  "Error": {
+    "description": "<p>Đã xảy ra sự cố.</p><p>Bạn có thể thử <retry>tải lại trang này</retry>.</p>",
+    "title": "Đã xảy ra lỗi!"
+  },
+  "IndexPage": {
+    "description": "Đây là một ví dụ minh họa cách sử dụng <code>next-intl</code> với Next.js App Router. Khi bạn thay đổi ngôn ngữ ở góc trên bên phải, nội dung trang sẽ thay đổi theo.",
+    "title": "Ví dụ về next-intl"
+  },
+  "LocaleLayout": {
+    "title": "Ví dụ về next-intl"
+  },
+  "LocaleSwitcher": {
+    "label": "Thay đổi ngôn ngữ",
+    "locale": "{locale, select, de {🇩🇪 Tiếng Đức} en {🇺🇸 Tiếng Anh} vi {vi Tieng Viet} other {Không xác định}}"
+  },
+  "Manifest": {
+    "name": ""
+  },
+  "Navigation": {
+    "home": "Trang chủ",
+    "pathnames": "Đường dẫn"
+  },
+  "NotFoundPage": {
+    "description": "Vui lòng kiểm tra thanh địa chỉ trình duyệt của bạn hoặc sử dụng thanh điều hướng để quay lại trang đã biết.",
+    "title": "Không tìm thấy trang"
+  },
+  "PageLayout": {
+    "links": {
+      "docs": {
+        "description": "Tìm hiểu thêm về next-intl trong tài liệu chính thức.",
+        "href": "https://next-intl.dev",
+        "title": "Tài liệu"
+      },
+      "source": {
+        "description": "Xem mã nguồn ví dụ này trên GitHub.",
+        "href": "https://github.com/amannn/next-intl/tree/main/examples/example-app-router",
+        "title": "Mã nguồn"
+      }
+    }
+  },
+  "PathnamesPage": {
+    "description": "<p>Các đường dẫn cũng được quốc tế hóa.</p><p>Nếu bạn đang dùng ngôn ngữ mặc định là tiếng Anh, bạn sẽ thấy <code>/en/pathnames</code> trên thanh địa chỉ trình duyệt.</p><p>Nếu bạn chuyển sang tiếng Việt, URL sẽ được bản địa hóa tương ứng (<code>/vi/duong-dan</code>).</p>",
+    "title": "Đường dẫn"
+  }
+}

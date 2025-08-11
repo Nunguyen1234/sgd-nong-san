@@ -10,16 +10,20 @@ import {
   CardContent,
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
+import Image from "next/image";
+import { heartBeatPulse } from "../../src/styles/animations";
 
 type TooltipProps = {
   title: string;
   value: string;
   icon: React.ReactNode;
+  image?: string;
   popover: {
     title: string;
     description: string;
   };
   onNext?: () => void;
+  showPulse?: boolean;
 };
 
 export const Tooltip = ({
@@ -27,7 +31,9 @@ export const Tooltip = ({
   value,
   icon,
   popover,
+  image,
   onNext,
+  showPulse,
 }: TooltipProps) => {
   const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
   const open = Boolean(anchorEl);
@@ -48,18 +54,31 @@ export const Tooltip = ({
         onClick={handleOpen}
         sx={{
           maxWidth: 300,
+          height: 240,
           mx: "auto",
           mt: 2,
           borderRadius: 4,
           py: 2,
           textAlign: "center",
           cursor: "pointer",
+          justifyContent: "space-between",
           transition: "transform 0.3s, box-shadow 0.3s",
           boxShadow: 2,
           "&:hover": { transform: "scale(1.03)", boxShadow: 6 },
         }}
       >
         <CardContent>
+          {image && (
+            <Box mb={2} display="flex" justifyContent="center">
+              <Image
+                src={image}
+                alt={title}
+                width={80}
+                height={100}
+                style={{ objectFit: "contain", borderRadius: 12 }}
+              />
+            </Box>
+          )}
           <Box display="flex" justifyContent="center" mb={2}>
             {icon}
           </Box>
@@ -69,6 +88,62 @@ export const Tooltip = ({
           <Typography variant="h6" fontWeight="bold">
             {value}
           </Typography>
+          {showPulse && (
+            <Box
+              sx={{
+                position: "relative",
+                width: 24,
+                height: 24,
+                margin: "8px auto 0",
+              }}
+            >
+              {/* Viền ngoài đậm – có animation */}
+              <Box
+                sx={{
+                  position: "absolute",
+                  top: 0,
+                  left: 0,
+                  width: "100%",
+                  height: "100%",
+                  borderRadius: "50%",
+                  border: "2px solid #f50057", // đỏ đậm
+                  animation: `${heartBeatPulse} 1.8s infinite`,
+                  boxSizing: "border-box",
+                  zIndex: 3,
+                }}
+              />
+
+              {/* Lớp ánh sáng mờ – có animation */}
+              <Box
+                sx={{
+                  position: "absolute",
+                  top: 0,
+                  left: 0,
+                  width: "100%",
+                  height: "100%",
+                  borderRadius: "50%",
+                  backgroundColor: "#ff80ab",
+                  opacity: 0.4,
+                  animation: `${heartBeatPulse} 1.8s infinite`,
+                  zIndex: 1,
+                }}
+              />
+
+              {/* Lõi đỏ – đứng yên */}
+              <Box
+                sx={{
+                  position: "absolute",
+                  top: "25%",
+                  left: "25%",
+                  width: "50%",
+                  height: "50%",
+                  borderRadius: "50%",
+                  backgroundColor: "#f50057", // đỏ đậm
+                  zIndex: 2,
+                }}
+              />
+            </Box>
+          )}
         </CardContent>
       </Card>
 
@@ -101,16 +176,13 @@ export const Tooltip = ({
             {popover.description}
           </Typography>
 
-          <Box display="flex" justifyContent="flex-end" gap={1}>
-            <Button size="small" onClick={handleClose}>
+          <Box display="flex" justifyContent="center" gap={3} mt={3}>
+            <Button size="small" variant="outlined" onClick={handleClose}>
               Bỏ qua
             </Button>
-            <Button variant="outlined" size="small">
-              Quay lại
-            </Button>
             <Button
-              variant="contained"
               size="small"
+              variant="contained"
               onClick={() => {
                 onNext?.();
                 handleClose();
